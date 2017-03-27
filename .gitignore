@@ -1,0 +1,5 @@
+.bundle/
+.idea/
+log/*.log
+pkg/
+config/secrets.yml
