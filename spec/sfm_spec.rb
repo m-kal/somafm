@@ -72,6 +72,17 @@ describe Sfm do
       histories = sfm.get_station_song_histories('defcon')
       expect(histories.length).to eq(11)
     end
+
+    it 'pares down results according to count limit' do
+      stub_request(:get, "http://somafm.com/defcon/songhistory.html").
+          with(:headers => {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'User-Agent'=>'Ruby'}).
+          to_return(:status => 200, :body => File.open("#{Rails.root}/spec/fixtures/defcon.htm", 'r'), :headers => {})
+
+
+      sfm = Sfm.new()
+      histories = sfm.get_station_song_histories('defcon', 5)
+      expect(histories.length).to eq(5)
+    end
   end
 
   describe '#parse_station_song_histories' do

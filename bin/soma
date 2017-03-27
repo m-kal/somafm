@@ -9,6 +9,11 @@ require 'Nokogiri'
 require "./lib/somafm/engine"
 require "./lib/sfm"
 
+def number_or_nil(string)
+  num = string.to_i
+  num if num.to_s == string
+end
+
 class SomaCli < Thor
   desc "st STATION", "Reports the current song for a given station."
   def st(station)
@@ -31,10 +36,10 @@ class SomaCli < Thor
     end
   end
 
-  desc "sh STATION", "Show song history"
-  def sh(channel)
+  desc "sh STATION <limit>", "Show song history"
+  def sh(channel, limit=0)
     sfm = Sfm.new()
-    sh = sfm.get_station_song_histories(channel)
+    sh = sfm.get_station_song_histories(channel, limit)
     sfm.pretty_format_hashes_as_table(sh).each do |line|
       puts line
     end

@@ -47,9 +47,10 @@ class Sfm
     sh['Played At'].end_with?('(Now)')
   end
 
-  def get_station_song_histories(station)
+  def get_station_song_histories(station, limit=0)
     doc = Nokogiri::HTML(open(build_song_history_url(station)))
-    parse_station_song_histories(doc)
+    parsed = parse_station_song_histories(doc)
+    parsed.take(limit.to_i.eql?(0) ? parsed.count : limit.to_i)
   end
 
   def parse_station_song_histories(html_history)
