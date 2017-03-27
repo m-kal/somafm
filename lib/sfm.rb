@@ -4,6 +4,7 @@ require 'thor'
 require 'net/http'
 require 'open-uri'
 require 'Nokogiri'
+require 'byebug'
 
 class Sfm
   # Your code goes here...
