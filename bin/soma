@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby.exe
+
 require 'rails'
 require 'thor'
 require 'net/http'
@@ -14,6 +16,10 @@ class SomaCli < Thor
     sfm = Sfm.new()
     st = sfm.get_channel_by_name_or_id(station)
     puts st.css('lastPlaying').text unless st.nil?
+    doc = sfm.get_current_channel_data
+    doc.css('channels channel').first do |ch|
+      puts ch.css('title').text + ': ' + ch.css('description').text
+    end
   end
 
   desc "ch", "Lists all channels."
@@ -28,36 +34,10 @@ class SomaCli < Thor
   desc "sh STATION", "Show song history"
   def sh(channel)
     sfm = Sfm.new()
-    doc = Nokogiri::HTML(open(sfm.build_song_history_url(channel)))
-    row = 0
-    sh_keys = []
-    sh = []
-    doc.css("table tr").each do |tr|
-      if row == 0
-        tr.css('td').each do |td|
-          sh_keys += [td.text]
-        end
-        row += 1
-        next
-      end
-
-      song_history = {}
-      col = 0
-      tr.css('td').each do |td|
-        unless sh_keys[col].eql?("")
-          song_history[sh_keys[col]] = td.text.strip
-          col += 1
-        end
-      end
-
-      if sfm.song_history_is_song?(song_history)
-        sh += [song_history]
-        if sfm.song_is_currently_played?(song_history)
-          #puts "now playing"
-        end
-      end
+    sh = sfm.get_station_song_histories(channel)
+    sfm.pretty_print_hashes_as_table(sh).each do |line|
+      puts line
     end
-    puts sh
   end
 end
 
