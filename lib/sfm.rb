@@ -20,12 +20,12 @@ class Sfm
     'http://somafm.com/channels.xml'
   end
 
-  def get_current_channel_data
+  def get_current_channel_data_xml
     Nokogiri::XML(open(self.build_channels_url))
   end
 
   def get_channel_by_name_or_id(str)
-    doc = get_current_channel_data
+    doc = get_current_channel_data_xml
     doc.css('channels channel').each do |ch|
       if ch.css('title').text.downcase.eql?(str) || ch['id'].downcase.eql?(str)
         return ch
@@ -35,12 +35,28 @@ class Sfm
     nil
   end
 
+  def song_history_is_song?(sh)
+    sh.key?('Played At') &&
+      sh.key?('Artist') &&
+      !sh['Played At'].eql?('') &&
+      !sh['Artist'].eql?('Break / Station ID') &&
+      !sh['Artist'].eql?('(sound bite)')
+  end
+
+  def song_is_currently_played?(sh)
+    sh['Played At'].end_with?('(Now)')
+  end
+
   def get_station_song_histories(station)
     doc = Nokogiri::HTML(open(build_song_history_url(station)))
+    parse_station_song_histories(doc)
+  end
+
+  def parse_station_song_histories(html_history)
     row = 0
     sh_keys = []
     sh = []
-    doc.css("table tr").each do |tr|
+    html_history.css("table tr").each do |tr|
       if row == 0
         tr.css('td').each do |td|
           sh_keys += [td.text]
@@ -69,17 +85,7 @@ class Sfm
     sh
   end
 
-  def song_history_is_song?(sh)
-    !sh['Played At'].eql?("") &&
-        !sh['Artist'].eql?('Break / Station ID') &&
-        !sh['Artist'].eql?('(sound bite)')
-  end
-
-  def song_is_currently_played?(sh)
-    sh['Played At'].end_with?('(Now)')
-  end
-
-  def pretty_print_hashes_as_table(hashes)
+  def pretty_format_hashes_as_table(hashes)
     response_lines = []
     longest_string = {}
     hashes.each do |history|

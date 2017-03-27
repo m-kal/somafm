@@ -16,7 +16,7 @@ class SomaCli < Thor
     sfm = Sfm.new()
     st = sfm.get_channel_by_name_or_id(station)
     puts st.css('lastPlaying').text unless st.nil?
-    doc = sfm.get_current_channel_data
+    doc = sfm.get_current_channel_data_xml
     doc.css('channels channel').first do |ch|
       puts ch.css('title').text + ': ' + ch.css('description').text
     end
@@ -25,7 +25,7 @@ class SomaCli < Thor
   desc "ch", "Lists all channels."
   def channels
     sfm = Sfm.new()
-    doc = sfm.get_current_channel_data
+    doc = sfm.get_current_channel_data_xml
     doc.css('channels channel').each do |ch|
       puts ch.css('title').text + ': ' + ch.css('description').text
     end
@@ -35,7 +35,7 @@ class SomaCli < Thor
   def sh(channel)
     sfm = Sfm.new()
     sh = sfm.get_station_song_histories(channel)
-    sfm.pretty_print_hashes_as_table(sh).each do |line|
+    sfm.pretty_format_hashes_as_table(sh).each do |line|
       puts line
     end
   end
