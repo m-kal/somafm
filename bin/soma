@@ -6,13 +6,9 @@ require 'net/http'
 require 'open-uri'
 require 'Nokogiri'
 
-require "./lib/somafm/engine"
-require "./lib/sfm"
-
-def number_or_nil(string)
-  num = string.to_i
-  num if num.to_s == string
-end
+require_relative "../lib/somafm/engine"
+require_relative "../lib/sfm"
+require_relative "../lib/winamp"
 
 class SomaCli < Thor
   desc "st STATION", "Reports the current song for a given station."
@@ -20,17 +16,14 @@ class SomaCli < Thor
     puts "Looking up info for #{station}..."
     sfm = Sfm.new()
     st = sfm.get_channel_by_name_or_id(station)
+    puts st.css('title').text + ' | ' + st.css('description').text
     puts st.css('lastPlaying').text unless st.nil?
-    doc = sfm.get_current_channel_data_xml
-    doc.css('channels channel').first do |ch|
-      puts ch.css('title').text + ': ' + ch.css('description').text
-    end
   end
 
   desc "ch", "Lists all channels."
   def channels
     sfm = Sfm.new()
-    doc = sfm.get_current_channel_data_xml
+    doc = sfm.get_current_channel_data_xml(true)
     doc.css('channels channel').each do |ch|
       puts ch.css('title').text + ': ' + ch.css('description').text
     end
@@ -43,6 +36,60 @@ class SomaCli < Thor
     sfm.pretty_format_hashes_as_table(sh).each do |line|
       puts line
     end
+  end
+
+  desc "pl STATION", "Play a station"
+  def pl(channel)
+    sfm = Sfm.new
+    wmp = Winamp.new
+    if channel.downcase == 'all'
+      stream_urls = []
+      doc = sfm.get_current_channel_data_xml(true)
+      doc.css('channels channel').each do |ch|
+        stream_urls << sfm.best_playlest_from_xml(ch)
+      end
+      wmp.listplay(stream_urls)
+    else
+      st = sfm.get_channel_by_name_or_id(channel)
+      plsfile = sfm.best_playlest_from_xml(st)
+      puts plsfile
+      wmp.play(plsfile)
+    end
+  end
+
+  desc "plstr", "Play stream"
+  def all
+    sfm = Sfm.new
+    wmp = Winamp.new
+    playlist_streams = []
+    doc = sfm.get_current_channel_data_xml(true)
+    doc.css('channels channel').each do |ch|
+      playlist_streams << sfm.best_playlest_from_xml(ch)
+    end
+    ice_streams = []
+    playlist_streams.each do |plstr|
+      ice_streams.append wmp.streams_from_pls(plstr)
+    end
+    custom_playlist = ice_streams.map{|is| is.first[:file]}
+    wmp.listplay(custom_playlist)
+  end
+
+  desc "pp", "Play/Pause Winamp"
+  def pp
+    wmp = Winamp.new
+    wmp.playpause
+  end
+
+  desc "cache", "Updates the cache"
+  def cache
+    sfm = Sfm.new()
+    cache_dir = sfm.get_cached_path
+    Dir.mkdir(cache_dir) unless Dir.exist?(cache_dir)
+    channels_xml_path = sfm.get_cached_path('channels.xml')
+    doc = sfm.get_current_channel_data_xml(false)
+    channels_xml_file = File.new(channels_xml_path, 'w+')
+    channels_xml_file.write(doc)
+    channels_xml_file.close
   end
 end
 

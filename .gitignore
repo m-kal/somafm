@@ -4,3 +4,4 @@ log/*.log
 pkg/
 config/secrets.yml
 .byebug_history
+.somafm

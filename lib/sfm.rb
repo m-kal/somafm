@@ -1,4 +1,4 @@
-require "./lib/somafm/engine"
+require_relative "./somafm/engine"
 
 require 'thor'
 require 'net/http'
@@ -20,12 +20,23 @@ class Sfm
     'http://somafm.com/channels.xml'
   end
 
-  def get_current_channel_data_xml
-    Nokogiri::XML(open(self.build_channels_url))
+  def get_cached_path(filename='')
+    File.expand_path("../../.somafm/#{filename}", __FILE__)
+  end
+
+  def get_current_channel_data_xml(use_cache=false)
+    cached_channels = get_cached_path('channels.xml')
+    if use_cache && File.exist?(cached_channels)
+      content = File.read(cached_channels)
+    else
+      content = open(self.build_channels_url)
+    end
+
+    Nokogiri::XML(content)
   end
 
   def get_channel_by_name_or_id(str)
-    doc = get_current_channel_data_xml
+    doc = get_current_channel_data_xml(true)
     doc.css('channels channel').each do |ch|
       if ch.css('title').text.downcase.eql?(str) || ch['id'].downcase.eql?(str)
         return ch
@@ -51,6 +62,13 @@ class Sfm
     doc = Nokogiri::HTML(open(build_song_history_url(station)))
     parsed = parse_station_song_histories(doc)
     parsed.take(limit.to_i.eql?(0) ? parsed.count : limit.to_i)
+  end
+
+  def best_playlest_from_xml(xmldoc)
+    if xmldoc.css('highestpls').empty?
+      return xmldoc.css('fastpls').first.text
+    end
+    return xmldoc.css('highestpls').first.text
   end
 
   def parse_station_song_histories(html_history)
