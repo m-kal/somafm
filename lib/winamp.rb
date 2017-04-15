@@ -75,7 +75,6 @@ class Winamp
 		# 			The <guid> parameter is optional and auto-generated if not specified
   @private
   def cmd(str)
-    puts str
     cmd = "\"#{@path}\" " + str
     system(cmd)
   end
