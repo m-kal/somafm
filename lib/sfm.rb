@@ -118,9 +118,13 @@ class Sfm
     hashes.first.keys.each do |key|
       fmt_str = "#{longest_string[key]}"
       headings << sprintf("| %-#{fmt_str}s ", key)
-      divider  << sprintf("|--" << "-" * longest_string[key])
+      divider  << (divider.length.equal?(0) ? "|" : "-")
+      divider  << sprintf("--" << "-" * longest_string[key])
     end
 
+    divider << "|"
+    headings << "|"
+    response_lines += [divider]
     response_lines += [headings]
     response_lines += [divider]
 
@@ -130,8 +134,9 @@ class Sfm
         fmt_str = "#{longest_string[key]}"
         str << sprintf("| %-#{fmt_str}s ", history[key])
       end
-      response_lines += [str]
+      response_lines += [str<< "|"]
     end
+    response_lines += [divider]
     response_lines
   end
 end
