@@ -52,6 +52,7 @@ GEM
       activesupport (>= 4.1.0)
     hashdiff (0.3.2)
     i18n (0.8.1)
+    inifile (3.0.0)
     loofah (2.0.3)
       nokogiri (>= 1.5.9)
     mail (2.6.4)
@@ -146,6 +147,7 @@ PLATFORMS
 
 DEPENDENCIES
   byebug
+  inifile
   rails
   rspec
   rspec-rails
