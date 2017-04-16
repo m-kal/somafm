@@ -15,7 +15,7 @@ class SomaCli < Thor
   def st(station)
     puts "Looking up info for #{station}..."
     sfm = Sfm.new()
-    st = sfm.get_channel_by_name_or_id(station)
+    st = sfm.get_channel_by_name_or_id(station, false)
     puts st.css('title').text + ' | ' + st.css('description').text
     puts st.css('lastPlaying').text unless st.nil?
   end
@@ -90,6 +90,20 @@ class SomaCli < Thor
     channels_xml_file = File.new(channels_xml_path, 'w+')
     channels_xml_file.write(doc)
     channels_xml_file.close
+  end
+
+  desc "bw", "Get bandwidth usage"
+  def bw
+    sfm = Sfm.new
+    doc = sfm.get_current_channel_data_xml(true)
+    shs = []
+    doc.css('channels channel').each do |ch|
+      station = ch['id']
+      puts "Fetching [ #{ch.css('title').text} ]"
+      STDOUT.flush
+      shs << sfm.get_station_song_histories(station)
+    end
+    puts (sfm.bandwidth/1024).to_s << " kbytes"
   end
 end
 

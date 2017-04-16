@@ -1,4 +1,5 @@
 require_relative "./somafm/engine"
+require_relative './webreq'
 
 require 'thor'
 require 'net/http'
@@ -9,7 +10,11 @@ require 'byebug'
 class Sfm
   # Your code goes here...
   def initialize
-    #
+    @webreq = WebReq.new
+  end
+
+  def bandwidth
+    return @webreq.bandwidth
   end
 
   def build_song_history_url(station)
@@ -29,14 +34,14 @@ class Sfm
     if use_cache && File.exist?(cached_channels)
       content = File.read(cached_channels)
     else
-      content = open(self.build_channels_url)
+      content = @webreq.get(self.build_channels_url)
     end
 
     Nokogiri::XML(content)
   end
 
-  def get_channel_by_name_or_id(str)
-    doc = get_current_channel_data_xml(true)
+  def get_channel_by_name_or_id(str, use_cache=true)
+    doc = get_current_channel_data_xml(use_cache)
     doc.css('channels channel').each do |ch|
       if ch.css('title').text.downcase.eql?(str) || ch['id'].downcase.eql?(str)
         return ch
@@ -59,7 +64,7 @@ class Sfm
   end
 
   def get_station_song_histories(station, limit=0)
-    doc = Nokogiri::HTML(open(build_song_history_url(station)))
+    doc = Nokogiri::HTML(@webreq.get(build_song_history_url(station)))
     parsed = parse_station_song_histories(doc)
     parsed.take(limit.to_i.eql?(0) ? parsed.count : limit.to_i)
   end
